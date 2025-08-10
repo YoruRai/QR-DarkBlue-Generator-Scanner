@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code Generator & Scanner</title>
+<style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        text-align: center;
+        padding: 20px;
+    }
+    h1 {
+        color: #93c5fd;
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    h2 {
+        color: #60a5fa;
+        margin-top: 40px;
+    }
+    input {
+        padding: 10px;
+        width: 80%;
+        max-width: 300px;
+        border: none;
+        border-radius: 8px;
+        outline: none;
+        margin-top: 10px;
+        background: #1e293b;
+        color: #e2e8f0;
+        font-size: 16px;
+    }
+    button {
+        padding: 10px 15px;
+        margin: 10px;
+        border: none;
+        border-radius: 8px;
+        background: #3b82f6;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    button:hover {
+        background: #2563eb;
+    }
+    #qrcode {
+        margin-top: 20px;
+        background: white;
+        display: inline-block;
+        padding: 10px;
+        border-radius: 8px;
+    }
+    video {
+        margin-top: 10px;
+        border-radius: 8px;
+    }
+    .donate {
+        margin-top: 30px;
+        padding: 10px 15px;
+        background: #38bdf8;
+        color: #0f172a;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-block;
+    }
+    .donate:hover {
+        background: #0ea5e9;
+    }
+</style>
+</head>
+<body>
+
+<h1>💙 QR Code Generator & Scanner</h1>
+<p>Create & Scan QR Codes directly from your browser</p>
+
+<!-- QR Code Generator -->
+<input type="text" id="text" placeholder="Enter text or URL">
+<br>
+<button onclick="generateQRCode()">Generate QR Code</button>
+<div id="qrcode"></div>
+
+<!-- QR Code Scanner -->
+<h2>QR Code Scanner</h2>
+<video id="preview" width="300" height="200"></video>
+<br>
+<button onclick="startScanner()">Start Scanning</button>
+<p id="scanResult"></p>
+
+<!-- Support Button -->
+<a class="donate" href="https://ko-fi.com/yorurai" target="_blank">☕ Support Me</a>
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+<script>
+    // QR Code Generator
+    function generateQRCode() {
+        let text = document.getElementById("text").value;
+        document.getElementById("qrcode").innerHTML = "";
+        if (text.trim() === "") {
+            alert("Please enter text or a URL!");
+            return;
+        }
+        new QRCode(document.getElementById("qrcode"), {
+            text: text,
+            width: 200,
+            height: 200
+        });
+    }
+
+    // QR Code Scanner
+    function startScanner() {
+        const video = document.getElementById("preview");
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(function(stream) {
+                video.srcObject = stream;
+                video.setAttribute("playsinline", true);
+                video.play();
+                requestAnimationFrame(tick);
+            })
+            .catch(err => alert("Failed to access camera: " + err));
+
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.height = video.videoHeight;
+                canvas.width = video.videoWidth;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
+                if (code) {
+                    document.getElementById("scanResult").innerHTML = 
+                        "📌 Scan Result: <a href='" + code.data + "' target='_blank'>" + code.data + "</a>";
+                }
+            }
+            requestAnimationFrame(tick);
+        }
+    }
+</script>
+</body>
+</html>
