@@ -1,0 +1,1 @@
+# QR-DarkBlue-Generator-Scanner
